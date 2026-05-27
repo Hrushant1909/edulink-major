@@ -45,7 +45,11 @@ public class AuthService {
         user.setStatus("PENDING");
 
         userRepository.save(user);
-
+        try{
+            emailService.sendRegistrationMail(user.getEmail(), user.getName());
+        }catch(Exception e){
+            System.err.println("Error sending mail!!"+e.getMessage());
+        }
         return "Teacher registration request submitted!";
     }
 
@@ -64,7 +68,11 @@ public class AuthService {
         user.setStatus("APPROVED");
 
         userRepository.save(user);
-
+        try{
+            emailService.sendRegistrationMail(user.getEmail(),user.getName());
+        }catch (Exception e){
+            System.err.println("Failed to send registration email: "+e.getMessage());
+        }
         return "Student registered successfully!";
     }
 

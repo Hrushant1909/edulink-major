@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
@@ -14,6 +14,8 @@ import { ForgotPassword } from './pages/ForgotPassword'
 import { VerifyOTP } from './pages/VerifyOTP'
 import { ResetPassword } from './pages/ResetPassword'
 import { Profile } from './pages/Profile'
+import { About } from './pages/About'
+import { Contact } from './pages/Contact'
 
 // Admin Pages
 import { AdminDashboard } from './pages/admin/AdminDashboard'
@@ -32,6 +34,7 @@ import { StudentDashboard } from './pages/student/StudentDashboard'
 import { SubjectBrowse } from './pages/student/SubjectBrowse'
 import { EnrolledSubjects } from './pages/student/EnrolledSubjects'
 import { MaterialList as StudentMaterialList } from './pages/student/MaterialList'
+import { SubjectChat } from './pages/chat/SubjectChat'
 
 function App() {
   return (
@@ -42,35 +45,23 @@ function App() {
             <div className="min-h-screen bg-background">
               <Routes>
                 {/* Public Routes */}
-                <Route
-                  path="/"
-                  element={
-                    <>
-                      <Navbar />
-                      <Landing />
-                    </>
-                  }
-                />
-                <Route
-                  path="/login"
-                  element={<Login />}
-                />
-                <Route
-                  path="/signup"
-                  element={<Signup />}
-                />
-                <Route
-                  path="/forgot-password"
-                  element={<ForgotPassword />}
-                />
-                <Route
-                  path="/verify-otp"
-                  element={<VerifyOTP />}
-                />
-                <Route
-                  path="/reset-password"
-                  element={<ResetPassword />}
-                />
+                {/* Public Routes with Global Navbar */}
+                <Route element={
+                  <>
+                    <Navbar />
+                    <Outlet />
+                  </>
+                }>
+                  <Route path="/" element={<Landing />} />
+                  <Route path="/about" element={<About />} />
+                  <Route path="/contact" element={<Contact />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/signup" element={<Signup />} />
+                  <Route path="/forgot-password" element={<ForgotPassword />} />
+                  <Route path="/verify-otp" element={<VerifyOTP />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
+                </Route>
+
 
                 {/* Protected Routes - Admin */}
                 <Route
@@ -132,6 +123,14 @@ function App() {
                   }
                 />
                 <Route
+                  path="/teacher/subjects/:subjectId/chat"
+                  element={
+                    <ProtectedRoute allowedRoles={['TEACHER']}>
+                      <SubjectChat mode="teacher" />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
                   path="/teacher/subjects/:subjectId/materials/upload"
                   element={
                     <ProtectedRoute allowedRoles={['TEACHER']}>
@@ -170,6 +169,14 @@ function App() {
                   element={
                     <ProtectedRoute allowedRoles={['STUDENT']}>
                       <StudentMaterialList />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/student/subjects/:subjectId/chat"
+                  element={
+                    <ProtectedRoute allowedRoles={['STUDENT']}>
+                      <SubjectChat mode="student" />
                     </ProtectedRoute>
                   }
                 />

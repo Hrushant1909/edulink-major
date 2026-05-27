@@ -132,7 +132,10 @@ export const AuthProvider = ({ children }) => {
         : await authService.studentSignup({ ...userData, role: 'STUDENT' })
       
       if (response.message) {
-        toast.success(response.message || 'Signup successful!')
+        // Don't show toast for teacher signup here - handled in Signup.jsx with custom message
+        if (role !== 'TEACHER') {
+          toast.success(response.message || 'Signup successful!')
+        }
         return { success: true }
       } else {
         toast.error(response.message || 'Signup failed')
