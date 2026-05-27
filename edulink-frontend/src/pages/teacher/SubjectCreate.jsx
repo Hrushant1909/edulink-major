@@ -7,6 +7,7 @@ import { Input } from '../../components/ui/Input'
 import { Label } from '../../components/ui/Label'
 import { LoadingSpinner } from '../../components/LoadingSpinner'
 import { subjectService } from '../../services/subjectService'
+import { StandardSelect } from '../../components/ui/StandardSelect'
 import toast from 'react-hot-toast'
 import { Plus, BookOpen, GraduationCap, Key, ArrowLeft } from 'lucide-react'
 
@@ -95,7 +96,7 @@ export const SubjectCreate = () => {
                     placeholder="e.g., Mathematics, Science, English Literature"
                     value={formData.name}
                     onChange={handleChange}
-                    className="pl-10.5 rounded-xl border-border bg-background/50 focus:bg-background transition-all"
+                    className="pl-10 rounded-xl border-border bg-background/50 focus:bg-background transition-all"
                     required
                     disabled={loading}
                   />
@@ -104,20 +105,13 @@ export const SubjectCreate = () => {
 
               <div className="space-y-1.5">
                 <Label htmlFor="standard" className="text-xs font-semibold text-foreground/80">Target Standard / Grade</Label>
-                <div className="relative">
-                  <GraduationCap className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="standard"
-                    name="standard"
-                    type="text"
-                    placeholder="e.g., 8th, 9th, 10th"
-                    value={formData.standard}
-                    onChange={handleChange}
-                    className="pl-10.5 rounded-xl border-border bg-background/50 focus:bg-background transition-all"
-                    required
-                    disabled={loading}
-                  />
-                </div>
+                <StandardSelect
+                  value={formData.standard}
+                  onChange={handleChange}
+                  name="standard"
+                  placeholder="Select Target Standard..."
+                  disabled={loading}
+                />
               </div>
 
               <div className="space-y-1.5">
@@ -131,7 +125,7 @@ export const SubjectCreate = () => {
                     placeholder="e.g., MATH2026, SECUREKEY"
                     value={formData.enrollmentKey}
                     onChange={handleChange}
-                    className="pl-10.5 rounded-xl border-border bg-background/50 focus:bg-background transition-all"
+                    className="pl-10 rounded-xl border-border bg-background/50 focus:bg-background transition-all"
                     required
                     disabled={loading}
                   />

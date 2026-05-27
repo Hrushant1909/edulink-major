@@ -1,10 +1,12 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
-import { AuthProvider } from './context/AuthContext'
+import { AuthProvider, useAuth } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { ProtectedRoute } from './components/ProtectedRoute'
+import { PublicRoute } from './components/PublicRoute'
 import { Navbar } from './components/layout/Navbar'
+import { DashboardLayout } from './components/layout/DashboardLayout'
 
 // Pages
 import { Landing } from './pages/Landing'
@@ -36,176 +38,206 @@ import { EnrolledSubjects } from './pages/student/EnrolledSubjects'
 import { MaterialList as StudentMaterialList } from './pages/student/MaterialList'
 import { SubjectChat } from './pages/chat/SubjectChat'
 
+function AppRoutes() {
+  const { isAuthenticated } = useAuth()
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Routes>
+        {/* Public Routes with Global Navbar, protected from logged-in sessions */}
+        <Route element={
+          <PublicRoute>
+            <Navbar />
+            <Outlet />
+          </PublicRoute>
+        }>
+          <Route path="/" element={<Landing />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/verify-otp" element={<VerifyOTP />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+        </Route>
+
+        {/* Dynamic About & Contact Pages (Navbar when public, DashboardLayout when logged in) */}
+        <Route path="/about" element={
+          isAuthenticated() ? (
+            <DashboardLayout>
+              <About />
+            </DashboardLayout>
+          ) : (
+            <>
+              <Navbar />
+              <About />
+            </>
+          )
+        } />
+        <Route path="/contact" element={
+          isAuthenticated() ? (
+            <DashboardLayout>
+              <Contact />
+            </DashboardLayout>
+          ) : (
+            <>
+              <Navbar />
+              <Contact />
+            </>
+          )
+        } />
+
+        {/* Protected Routes - Admin */}
+        <Route
+          path="/admin/dashboard"
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/teachers"
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <PendingTeachers />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Protected Routes - Teacher */}
+        <Route
+          path="/teacher/dashboard"
+          element={
+            <ProtectedRoute allowedRoles={['TEACHER']}>
+              <TeacherDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/subjects"
+          element={
+            <ProtectedRoute allowedRoles={['TEACHER']}>
+              <SubjectList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/subjects/create"
+          element={
+            <ProtectedRoute allowedRoles={['TEACHER']}>
+              <SubjectCreate />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/subjects/:id"
+          element={
+            <ProtectedRoute allowedRoles={['TEACHER']}>
+              <SubjectView />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/subjects/:subjectId/materials"
+          element={
+            <ProtectedRoute allowedRoles={['TEACHER']}>
+              <MaterialList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/subjects/:subjectId/chat"
+          element={
+            <ProtectedRoute allowedRoles={['TEACHER']}>
+              <SubjectChat mode="teacher" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/subjects/:subjectId/materials/upload"
+          element={
+            <ProtectedRoute allowedRoles={['TEACHER']}>
+              <MaterialUpload />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Protected Routes - Student */}
+        <Route
+          path="/student/dashboard"
+          element={
+            <ProtectedRoute allowedRoles={['STUDENT']}>
+              <StudentDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/student/subjects"
+          element={
+            <ProtectedRoute allowedRoles={['STUDENT']}>
+              <SubjectBrowse />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/student/enrolled"
+          element={
+            <ProtectedRoute allowedRoles={['STUDENT']}>
+              <EnrolledSubjects />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/student/subjects/:subjectId/materials"
+          element={
+            <ProtectedRoute allowedRoles={['STUDENT']}>
+              <StudentMaterialList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/student/subjects/:subjectId/chat"
+          element={
+            <ProtectedRoute allowedRoles={['STUDENT']}>
+              <SubjectChat mode="student" />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Protected Route - Profile */}
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Catch all - redirect to home */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 3000,
+          style: {
+            background: 'hsl(var(--card))',
+            color: 'hsl(var(--card-foreground))',
+            border: '1px solid hsl(var(--border))',
+          },
+        }}
+      />
+    </div>
+  )
+}
+
 function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider>
         <AuthProvider>
           <Router>
-            <div className="min-h-screen bg-background">
-              <Routes>
-                {/* Public Routes */}
-                {/* Public Routes with Global Navbar */}
-                <Route element={
-                  <>
-                    <Navbar />
-                    <Outlet />
-                  </>
-                }>
-                  <Route path="/" element={<Landing />} />
-                  <Route path="/about" element={<About />} />
-                  <Route path="/contact" element={<Contact />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/signup" element={<Signup />} />
-                  <Route path="/forgot-password" element={<ForgotPassword />} />
-                  <Route path="/verify-otp" element={<VerifyOTP />} />
-                  <Route path="/reset-password" element={<ResetPassword />} />
-                </Route>
-
-
-                {/* Protected Routes - Admin */}
-                <Route
-                  path="/admin/dashboard"
-                  element={
-                    <ProtectedRoute allowedRoles={['ADMIN']}>
-                      <AdminDashboard />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/admin/teachers"
-                  element={
-                    <ProtectedRoute allowedRoles={['ADMIN']}>
-                      <PendingTeachers />
-                    </ProtectedRoute>
-                  }
-                />
-
-                {/* Protected Routes - Teacher */}
-                <Route
-                  path="/teacher/dashboard"
-                  element={
-                    <ProtectedRoute allowedRoles={['TEACHER']}>
-                      <TeacherDashboard />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/teacher/subjects"
-                  element={
-                    <ProtectedRoute allowedRoles={['TEACHER']}>
-                      <SubjectList />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/teacher/subjects/create"
-                  element={
-                    <ProtectedRoute allowedRoles={['TEACHER']}>
-                      <SubjectCreate />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/teacher/subjects/:id"
-                  element={
-                    <ProtectedRoute allowedRoles={['TEACHER']}>
-                      <SubjectView />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/teacher/subjects/:subjectId/materials"
-                  element={
-                    <ProtectedRoute allowedRoles={['TEACHER']}>
-                      <MaterialList />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/teacher/subjects/:subjectId/chat"
-                  element={
-                    <ProtectedRoute allowedRoles={['TEACHER']}>
-                      <SubjectChat mode="teacher" />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/teacher/subjects/:subjectId/materials/upload"
-                  element={
-                    <ProtectedRoute allowedRoles={['TEACHER']}>
-                      <MaterialUpload />
-                    </ProtectedRoute>
-                  }
-                />
-
-                {/* Protected Routes - Student */}
-                <Route
-                  path="/student/dashboard"
-                  element={
-                    <ProtectedRoute allowedRoles={['STUDENT']}>
-                      <StudentDashboard />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/student/subjects"
-                  element={
-                    <ProtectedRoute allowedRoles={['STUDENT']}>
-                      <SubjectBrowse />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/student/enrolled"
-                  element={
-                    <ProtectedRoute allowedRoles={['STUDENT']}>
-                      <EnrolledSubjects />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/student/subjects/:subjectId/materials"
-                  element={
-                    <ProtectedRoute allowedRoles={['STUDENT']}>
-                      <StudentMaterialList />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/student/subjects/:subjectId/chat"
-                  element={
-                    <ProtectedRoute allowedRoles={['STUDENT']}>
-                      <SubjectChat mode="student" />
-                    </ProtectedRoute>
-                  }
-                />
-
-                {/* Protected Route - Profile */}
-                <Route
-                  path="/profile"
-                  element={
-                    <ProtectedRoute>
-                      <Profile />
-                    </ProtectedRoute>
-                  }
-                />
-
-                {/* Catch all - redirect to home */}
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-              <Toaster
-                position="top-right"
-                toastOptions={{
-                  duration: 3000,
-                  style: {
-                    background: 'hsl(var(--card))',
-                    color: 'hsl(var(--card-foreground))',
-                    border: '1px solid hsl(var(--border))',
-                  },
-                }}
-              />
-            </div>
+            <AppRoutes />
           </Router>
         </AuthProvider>
       </ThemeProvider>

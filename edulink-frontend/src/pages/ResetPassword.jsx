@@ -99,7 +99,7 @@ export const ResetPassword = () => {
                     placeholder="Enter new password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="pl-10.5 pr-10 rounded-xl border-border/60 bg-background/50 focus:bg-background transition-all"
+                    className="pl-10 pr-10 rounded-xl border-border/60 bg-background/50 focus:bg-background transition-all"
                     required
                     disabled={loading}
                     minLength={6}
@@ -123,7 +123,7 @@ export const ResetPassword = () => {
                     placeholder="Confirm new password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="pl-10.5 rounded-xl border-border/60 bg-background/50 focus:bg-background transition-all"
+                    className="pl-10 rounded-xl border-border/60 bg-background/50 focus:bg-background transition-all"
                     required
                     disabled={loading}
                     minLength={6}

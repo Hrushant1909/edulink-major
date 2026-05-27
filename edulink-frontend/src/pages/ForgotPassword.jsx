@@ -70,7 +70,7 @@ export const ForgotPassword = () => {
                     placeholder="name@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10.5 rounded-xl border-border/60 bg-background/50 focus:bg-background transition-all"
+                    className="pl-10 rounded-xl border-border/60 bg-background/50 focus:bg-background transition-all"
                     required
                     disabled={loading}
                     autoFocus

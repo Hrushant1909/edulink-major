@@ -28,7 +28,7 @@ export const Navbar = () => {
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60 transition-all duration-300">
       <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6">
-        <Link to="/" className="flex items-center space-x-2 group">
+        <Link to={isAuthenticated() ? getDashboardLink() : "/"} className="flex items-center space-x-2 group">
           <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-primary to-violet-600 flex items-center justify-center text-primary-foreground font-extrabold text-lg shadow-premium hover-glow">
             E
           </div>

@@ -9,6 +9,7 @@ import { Modal } from '../../components/ui/Modal'
 import { LoadingSpinner } from '../../components/LoadingSpinner'
 import { EmptyState } from '../../components/EmptyState'
 import { subjectService } from '../../services/subjectService'
+import { StandardSelect } from '../../components/ui/StandardSelect'
 import toast from 'react-hot-toast'
 import { BookOpen, GraduationCap, Search, Key, Sparkles, ChevronRight, X } from 'lucide-react'
 
@@ -99,18 +100,13 @@ export const SubjectBrowse = () => {
             <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-4">
               <div className="flex-1 space-y-1.5">
                 <Label htmlFor="standard" className="text-xs font-semibold text-foreground/80">Standard / Grade</Label>
-                <div className="relative">
-                  <GraduationCap className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="standard"
-                    type="text"
-                    placeholder="e.g., 8th, 9th, 10th"
-                    value={standard}
-                    onChange={(e) => setStandard(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                    className="pl-10.5 rounded-xl border-border bg-background/50 focus:bg-background transition-all"
-                  />
-                </div>
+                <StandardSelect
+                  value={standard}
+                  onChange={(e) => setStandard(e.target.value)}
+                  name="standard"
+                  placeholder="Select Standard to Browse..."
+                  disabled={loading}
+                />
               </div>
               <Button onClick={handleSearch} disabled={loading} className="rounded-xl h-10 px-6 font-semibold shadow-premium hover-glow active-pulse">
                 {loading ? <LoadingSpinner size="sm" /> : 'Search'}
@@ -126,7 +122,7 @@ export const SubjectBrowse = () => {
               <BookOpen className="h-14 w-14 text-muted-foreground/60 mx-auto" />
               <div className="space-y-1">
                 <p className="text-lg font-bold font-outfit text-foreground">No subjects found</p>
-                <p className="text-muted-foreground text-sm max-w-xs mx-auto">Try searching for your grade standard above (e.g. "8th" or "9th") to list subjects.</p>
+                <p className="text-muted-foreground text-sm max-w-xs mx-auto">Select your grade standard from the dropdown above to list subjects.</p>
               </div>
             </CardContent>
           </Card>
@@ -189,7 +185,7 @@ export const SubjectBrowse = () => {
                   placeholder="Enter enrollment key"
                   value={enrollmentKey}
                   onChange={(e) => setEnrollmentKey(e.target.value)}
-                  className="pl-10.5 rounded-xl border-border bg-background/50 focus:bg-background transition-all"
+                  className="pl-10 rounded-xl border-border bg-background/50 focus:bg-background transition-all"
                   disabled={enrolling}
                 />
               </div>
