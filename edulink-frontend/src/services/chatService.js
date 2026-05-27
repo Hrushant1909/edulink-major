@@ -44,6 +44,26 @@ export const chatService = {
     const response = await api.get(`/api/chat/subjects/${subjectId}/doubts`)
     return response.data
   },
+
+  async summarizeChat(subjectId, messages = []) {
+    const payload = {
+      messages: messages
+        .map((message) => message?.content)
+        .filter((content) => typeof content === 'string' && content.trim())
+        .map((content) => content.trim()),
+    }
+
+    console.info('[chatService] Requesting chat summary', {
+      subjectId,
+      fallbackMessageCount: payload.messages.length,
+    })
+
+    const response = await api.post(`/api/chat/subjects/${subjectId}/summary`, payload, {
+      timeout: 180000,
+    })
+    console.info('[chatService] Chat summary response', response.data)
+    return response.data
+  },
 }
 
 

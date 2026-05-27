@@ -10,7 +10,7 @@ import { chatService } from '../../services/chatService'
 import { subjectService } from '../../services/subjectService'
 import { useAuth } from '../../context/AuthContext'
 import { cn } from '../../utils/cn'
-import { Circle, MessageSquare, Users, Send, ArrowLeft, Wifi, WifiOff, Search } from 'lucide-react'
+import { Circle, MessageSquare, Users, Send, ArrowLeft, Wifi, WifiOff, Search, Sparkles, X } from 'lucide-react'
 import SockJS from 'sockjs-client/dist/sockjs'
 import { Client } from '@stomp/stompjs'
 
@@ -31,6 +31,10 @@ export const SubjectChat = ({ mode }) => {
   const [loadingParticipants, setLoadingParticipants] = useState(true)
   const [wsStatus, setWsStatus] = useState('connecting') // connecting, connected, offline
   const [memberSearch, setMemberSearch] = useState('')
+  const [summaryOpen, setSummaryOpen] = useState(false)
+  const [summaryLoading, setSummaryLoading] = useState(false)
+  const [summaryError, setSummaryError] = useState('')
+  const [chatSummary, setChatSummary] = useState(null)
   
   const messagesEndRef = useRef(null)
   const chatContainerRef = useRef(null)
@@ -382,6 +386,36 @@ export const SubjectChat = ({ mode }) => {
     }
   }
 
+  const handleSummarizeChat = async () => {
+    if (summaryLoading) return
+
+    try {
+      console.info('[SubjectChat] Summarize Chat clicked', {
+        subjectId: numericSubjectId,
+        visibleMessageCount: messages.length,
+      })
+      setSummaryOpen(true)
+      setSummaryLoading(true)
+      setSummaryError('')
+      setChatSummary(null)
+
+      const res = await chatService.summarizeChat(numericSubjectId, messages)
+      console.info('[SubjectChat] Summary payload received', res)
+      setChatSummary(res.data || null)
+    } catch (error) {
+      console.error('[SubjectChat] Summary request failed', error)
+      const message =
+        error.response?.data?.data?.summary ||
+        error.response?.data?.message ||
+        error.response?.data?.detail ||
+        error.response?.data?.error ||
+        'Unable to generate the chat summary right now.'
+      setSummaryError(message)
+    } finally {
+      setSummaryLoading(false)
+    }
+  }
+
   const title = subject
     ? `${subject.name} Channel`
     : mode === 'teacher'
@@ -445,6 +479,16 @@ export const SubjectChat = ({ mode }) => {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="rounded-lg text-xs h-9 gap-1.5"
+            onClick={handleSummarizeChat}
+            disabled={summaryLoading || loadingMessages || messages.length === 0}
+          >
+            {summaryLoading ? <LoadingSpinner size="sm" /> : <Sparkles className="h-3.5 w-3.5" />}
+            <span>Summarize Chat</span>
+          </Button>
           <ThemeToggle />
           <Button variant="outline" size="sm" className="rounded-lg text-xs h-9" onClick={() => navigate(backHref)}>
             Exit Workspace
@@ -752,6 +796,106 @@ export const SubjectChat = ({ mode }) => {
           </CardContent>
         </Card>
       </div>
+
+      {summaryOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-2xl max-h-[86vh] overflow-hidden rounded-2xl border border-border bg-card shadow-premium">
+            <div className="flex items-center justify-between gap-3 border-b border-border/50 px-5 py-4">
+              <div className="flex items-center gap-2 min-w-0">
+                <Sparkles className="h-4 w-4 text-primary flex-shrink-0" />
+                <h2 className="text-base font-extrabold font-outfit text-foreground truncate">Chat Summary</h2>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 rounded-lg flex-shrink-0"
+                onClick={() => setSummaryOpen(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <div className="max-h-[70vh] overflow-y-auto p-5">
+              {summaryLoading ? (
+                <div className="flex min-h-56 flex-col items-center justify-center gap-3 text-center">
+                  <LoadingSpinner size="md" />
+                  <p className="text-sm font-semibold text-muted-foreground">Generating summary from classroom messages...</p>
+                </div>
+              ) : summaryError ? (
+                <div className="rounded-xl border border-rose-500/25 bg-rose-500/10 p-4 text-sm font-medium text-rose-600 dark:text-rose-300">
+                  {summaryError}
+                </div>
+              ) : chatSummary ? (
+                <div className="space-y-5">
+                  <section className="space-y-2">
+                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground">Generated Summary</h3>
+                    <p className="rounded-xl border border-border/50 bg-background/60 p-4 text-sm leading-6 text-foreground whitespace-pre-wrap">
+                      {chatSummary.summary}
+                    </p>
+                  </section>
+
+                  <section className="space-y-2">
+                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground">Top Topics</h3>
+                    {chatSummary.topics?.length ? (
+                      <div className="flex flex-wrap gap-2">
+                        {chatSummary.topics.map((topic) => (
+                          <span
+                            key={topic}
+                            className="rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-xs font-bold text-primary"
+                          >
+                            {topic}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No topics detected.</p>
+                    )}
+                  </section>
+
+                  <section className="space-y-2">
+                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground">Learning Insights</h3>
+                    {chatSummary.insights?.length ? (
+                      <div className="space-y-2">
+                        {chatSummary.insights.map((insight) => (
+                          <div
+                            key={insight}
+                            className="rounded-xl border border-border/50 bg-background/60 px-3 py-2 text-sm text-foreground"
+                          >
+                            {insight}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No insights generated.</p>
+                    )}
+                  </section>
+
+                  <section className="space-y-2">
+                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground">Weak Areas</h3>
+                    {chatSummary.weakAreas?.length ? (
+                      <div className="flex flex-wrap gap-2">
+                        {chatSummary.weakAreas.map((area) => (
+                          <span
+                            key={area}
+                            className="rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-bold text-amber-600 dark:text-amber-300"
+                          >
+                            {area}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No weak areas detected.</p>
+                    )}
+                  </section>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No summary generated yet.</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 

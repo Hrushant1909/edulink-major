@@ -147,6 +147,19 @@ public class ChatService {
                 .collect(Collectors.toList());
     }
 
+    public List<String> getMessageContentsForSubject(String email, Long subjectId) {
+        User currentUser = getCurrentUser(email);
+        Subject subject = getSubjectOrThrow(subjectId);
+        assertUserCanAccessSubjectChat(currentUser, subject);
+
+        return chatMessageRepository.findBySubjectIdOrderByIdAsc(subjectId)
+                .stream()
+                .map(ChatMessage::getContent)
+                .filter(content -> content != null && !content.trim().isEmpty())
+                .map(String::trim)
+                .collect(Collectors.toList());
+    }
+
     private boolean containsDoubtKeywords(String content) {
         if (content == null) return false;
         String lower = content.toLowerCase();
