@@ -25,6 +25,7 @@ export const SubjectChat = ({ mode }) => {
   const [messages, setMessages] = useState([])
   const [loadingMessages, setLoadingMessages] = useState(true)
   const [input, setInput] = useState('')
+  const [isDoubt, setIsDoubt] = useState(false)
   const [sending, setSending] = useState(false)
   const [participants, setParticipants] = useState(null)
   const [loadingParticipants, setLoadingParticipants] = useState(true)
@@ -123,9 +124,7 @@ export const SubjectChat = ({ mode }) => {
       
       if (isSameSender && isTimeClose) {
         groups[groups.length - 1].contents.push({
-          id: msg.id,
-          content: msg.content,
-          createdAt: msg.createdAt
+          ...msg
         })
       } else {
         groups.push({
@@ -134,9 +133,7 @@ export const SubjectChat = ({ mode }) => {
           senderRole: msg.senderRole,
           own: msg.own,
           contents: [{
-            id: msg.id,
-            content: msg.content,
-            createdAt: msg.createdAt
+            ...msg
           }]
         })
       }
@@ -205,12 +202,16 @@ export const SubjectChat = ({ mode }) => {
           if (!body || !body.id) return
 
           setMessages((prev) => {
-            if (prev.some((m) => m.id === body.id)) {
-              return prev
-            }
-            // Check if it is current user's message to mark own
+            const idx = prev.findIndex((m) => m.id === body.id)
             const isOwn = body.senderId === user?.id || (user?.email && body.senderName === user.name)
-            return [...prev, { ...body, own: isOwn }]
+            const mappedMsg = { ...body, own: isOwn }
+            if (idx >= 0) {
+              const updated = [...prev]
+              updated[idx] = mappedMsg
+              return updated
+            } else {
+              return [...prev, mappedMsg]
+            }
           })
         } catch (e) {
           console.error('Error parsing chat message:', e)
@@ -285,6 +286,65 @@ export const SubjectChat = ({ mode }) => {
     }
   }, [numericSubjectId, user])
 
+  const handleToggleUpvote = async (messageId) => {
+    try {
+      // Optimistic update
+      setMessages((prev) =>
+        prev.map((m) => {
+          if (m.id === messageId) {
+            const newUpvoted = !m.upvoted;
+            const newVoteCount = newUpvoted ? (m.voteCount || 0) + 1 : Math.max(0, (m.voteCount || 0) - 1);
+            return { ...m, upvoted: newUpvoted, voteCount: newVoteCount };
+          }
+          return m;
+        })
+      )
+      
+      const res = await chatService.toggleUpvote(messageId)
+      if (res?.data) {
+        setMessages((prev) =>
+          prev.map((m) => (m.id === messageId ? { ...m, ...res.data } : m))
+        )
+      }
+    } catch (error) {
+      console.error('Error toggling upvote:', error)
+    }
+  }
+
+  const handleToggleDoubt = async (messageId) => {
+    try {
+      // Optimistic update
+      setMessages((prev) =>
+        prev.map((m) => (m.id === messageId ? { ...m, isDoubt: !m.isDoubt } : m))
+      )
+      const res = await chatService.toggleDoubt(messageId)
+      if (res?.data) {
+        setMessages((prev) =>
+          prev.map((m) => (m.id === messageId ? { ...m, ...res.data } : m))
+        )
+      }
+    } catch (error) {
+      console.error('Error toggling doubt:', error)
+    }
+  }
+
+  const handleToggleResolve = async (messageId) => {
+    try {
+      // Optimistic update
+      setMessages((prev) =>
+        prev.map((m) => (m.id === messageId ? { ...m, resolved: !m.resolved } : m))
+      )
+      const res = await chatService.toggleResolve(messageId)
+      if (res?.data) {
+        setMessages((prev) =>
+          prev.map((m) => (m.id === messageId ? { ...m, ...res.data } : m))
+        )
+      }
+    } catch (error) {
+      console.error('Error toggling resolve:', error)
+    }
+  }
+
   const handleSend = async (e) => {
     e?.preventDefault()
     const trimmed = input.trim()
@@ -300,16 +360,19 @@ export const SubjectChat = ({ mode }) => {
           body: JSON.stringify({
             subjectId: numericSubjectId,
             content: trimmed,
+            isDoubt: isDoubt,
           }),
         })
         setInput('')
+        setIsDoubt(false)
       } else {
         // Fallback to REST API
-        const res = await chatService.sendMessage(numericSubjectId, trimmed)
+        const res = await chatService.sendMessage(numericSubjectId, trimmed, isDoubt)
         const message = res.data
         if (message) {
           setMessages((prev) => [...prev, { ...message, own: true }])
           setInput('')
+          setIsDoubt(false)
         }
       }
     } catch (error) {
@@ -445,33 +508,116 @@ export const SubjectChat = ({ mode }) => {
                       </div>
 
                       {/* Contents bubble list */}
-                      <div className={cn("space-y-1", group.own ? "items-end" : "items-start")}>
-                        {group.contents.map((c) => (
-                          <div 
-                            key={c.id} 
-                            className={cn(
-                              "group/msg relative rounded-2xl px-3.5 py-2 text-sm shadow-premium leading-relaxed border transition-all duration-200",
-                              group.own 
-                                ? "bg-primary text-primary-foreground border-primary/20 rounded-tr-none hover:bg-primary/95 ml-auto" 
-                                : "bg-card text-foreground border-border/40 rounded-tl-none hover:bg-muted/10 mr-auto"
-                            )}
-                          >
-                            <p className="whitespace-pre-wrap break-words text-[13px]">{c.content}</p>
-                            
-                            {/* Hover timestamp */}
-                            {c.createdAt && (
-                              <span className={cn(
-                                "absolute bottom-1 right-2 text-[9px] opacity-0 group-hover/msg:opacity-75 transition-opacity font-medium",
-                                group.own ? "text-primary-foreground/80" : "text-muted-foreground"
-                              )}>
-                                {new Date(c.createdAt).toLocaleTimeString([], {
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                })}
-                              </span>
-                            )}
-                          </div>
-                        ))}
+                      <div className={cn("space-y-2 flex flex-col w-full", group.own ? "items-end ml-auto" : "items-start mr-auto")}>
+                        {group.contents.map((c) => {
+                          const isMsgDoubt = c.isDoubt;
+                          const isMsgResolved = c.resolved;
+
+                          const bubbleClass = cn(
+                            "group/msg relative rounded-2xl px-3.5 py-2 text-sm shadow-premium leading-relaxed border transition-all duration-200 w-fit",
+                            group.own ? "rounded-tr-none ml-auto" : "rounded-tl-none mr-auto",
+                            !isMsgDoubt
+                              ? (group.own 
+                                  ? "bg-primary text-primary-foreground border-primary/20 hover:bg-primary/95" 
+                                  : "bg-card text-foreground border-border/40 hover:bg-muted/10")
+                              : (isMsgResolved
+                                  ? "bg-emerald-50/80 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-250 border-emerald-500/30 hover:bg-emerald-100/50 dark:hover:bg-emerald-950/40"
+                                  : "bg-amber-50/80 dark:bg-amber-950/30 text-amber-900 dark:text-amber-250 border-amber-500/30 hover:bg-amber-100/50 dark:hover:bg-amber-950/40")
+                          );
+
+                          return (
+                            <div key={c.id} className={cn("flex flex-col max-w-[85%]", group.own ? "items-end ml-auto" : "items-start mr-auto")}>
+                              <div className={bubbleClass}>
+                                {isMsgDoubt && (
+                                  <div className="flex items-center gap-1.5 mb-1.5 text-[9px] font-extrabold uppercase tracking-wider select-none">
+                                    {isMsgResolved ? (
+                                      <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                                        ✓ Resolved Doubt
+                                      </span>
+                                    ) : (
+                                      <span className="text-amber-600 dark:text-amber-400 flex items-center gap-1 animate-pulse">
+                                        ❓ Open Doubt
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+
+                                <p className="whitespace-pre-wrap break-words text-[13px]">{c.content}</p>
+                                
+                                {/* Hover timestamp */}
+                                {c.createdAt && (
+                                  <span className={cn(
+                                    "absolute bottom-1 right-2 text-[9px] opacity-0 group-hover/msg:opacity-75 transition-opacity font-medium",
+                                    group.own && !isMsgDoubt ? "text-primary-foreground/80" : "text-muted-foreground"
+                                  )}>
+                                    {new Date(c.createdAt).toLocaleTimeString([], {
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                    })}
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* Message stats / controls underneath bubble */}
+                              {(isMsgDoubt || userRole === 'TEACHER') && (
+                                <div className={cn(
+                                  "flex items-center gap-2 mt-1 px-1 text-[10px]",
+                                  group.own ? "justify-end ml-auto" : "justify-start mr-auto"
+                                )}>
+                                  {/* Upvote Button */}
+                                  {isMsgDoubt && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleToggleUpvote(c.id)}
+                                      className={cn(
+                                        "flex items-center gap-1.5 px-2 py-0.5 rounded-full border transition-all active:scale-95 font-bold shadow-sm text-[10px]",
+                                        c.upvoted
+                                          ? "bg-primary/20 text-primary border-primary/45"
+                                          : "bg-background/80 text-muted-foreground border-border/60 hover:bg-muted hover:text-foreground"
+                                      )}
+                                    >
+                                      <span>👍</span>
+                                      <span>{c.voteCount || 0}</span>
+                                    </button>
+                                  )}
+
+                                  {/* Teacher Controls */}
+                                  {userRole === 'TEACHER' && (
+                                    <>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleToggleDoubt(c.id)}
+                                        className={cn(
+                                          "px-2 py-0.5 rounded-full border text-[9px] font-extrabold tracking-wide uppercase transition-all active:scale-95 shadow-sm",
+                                          isMsgDoubt
+                                            ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30"
+                                            : "bg-background/80 text-muted-foreground border-border/60 hover:bg-muted hover:text-foreground"
+                                        )}
+                                      >
+                                        {isMsgDoubt ? "Remove Doubt" : "Mark Doubt"}
+                                      </button>
+                                      
+                                      {isMsgDoubt && (
+                                        <button
+                                          type="button"
+                                          onClick={() => handleToggleResolve(c.id)}
+                                          className={cn(
+                                            "px-2 py-0.5 rounded-full border text-[9px] font-extrabold tracking-wide uppercase transition-all active:scale-95 shadow-sm",
+                                            isMsgResolved
+                                              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+                                              : "bg-background/80 text-muted-foreground border-border/60 hover:bg-muted hover:text-foreground"
+                                          )}
+                                        >
+                                          {isMsgResolved ? "Unresolve" : "Resolve"}
+                                        </button>
+                                      )}
+                                    </>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   </div>
@@ -483,6 +629,19 @@ export const SubjectChat = ({ mode }) => {
             {/* Message Input Footer Form */}
             <div className="p-4 border-t border-border/40 bg-card/90">
               <form onSubmit={handleSend} className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsDoubt(!isDoubt)}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 h-10 rounded-xl border text-xs font-bold transition-all active:scale-95 flex-shrink-0 shadow-sm",
+                    isDoubt
+                      ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/35"
+                      : "bg-background/80 text-muted-foreground border-border/60 hover:bg-muted"
+                  )}
+                >
+                  <span>❓</span>
+                  <span className="hidden sm:inline">Ask Doubt</span>
+                </button>
                 <Input
                   placeholder="Ask a question or type a message..."
                   value={input}

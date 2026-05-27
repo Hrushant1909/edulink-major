@@ -62,7 +62,7 @@ public class ChatController {
             @RequestBody SendMessageRequest request
     ) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        ChatMessageDto message = chatService.sendMessage(email, subjectId, request.getContent());
+        ChatMessageDto message = chatService.sendMessage(email, subjectId, request.getContent(), request.getIsDoubt());
         return ResponseEntity.ok(new ApiResponse("Message sent", message));
     }
 
@@ -78,6 +78,34 @@ public class ChatController {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         ChatParticipantsResponse response = chatService.getParticipants(email, subjectId);
         return ResponseEntity.ok(new ApiResponse("Participants fetched", response));
+    }
+
+    @PostMapping("/messages/{messageId}/upvote")
+    public ResponseEntity<ApiResponse> toggleUpvote(@PathVariable Long messageId) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        ChatMessageDto updatedMessage = chatService.toggleUpvote(email, messageId);
+        return ResponseEntity.ok(new ApiResponse("Upvote toggled successfully", updatedMessage));
+    }
+
+    @PostMapping("/messages/{messageId}/doubt")
+    public ResponseEntity<ApiResponse> toggleDoubt(@PathVariable Long messageId) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        ChatMessageDto updatedMessage = chatService.toggleDoubt(email, messageId);
+        return ResponseEntity.ok(new ApiResponse("Doubt flag toggled successfully", updatedMessage));
+    }
+
+    @PostMapping("/messages/{messageId}/resolve")
+    public ResponseEntity<ApiResponse> toggleResolve(@PathVariable Long messageId) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        ChatMessageDto updatedMessage = chatService.toggleResolve(email, messageId);
+        return ResponseEntity.ok(new ApiResponse("Doubt resolve state toggled successfully", updatedMessage));
+    }
+
+    @GetMapping("/subjects/{subjectId}/doubts")
+    public ResponseEntity<ApiResponse> getSubjectDoubts(@PathVariable Long subjectId) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        List<ChatMessageDto> doubts = chatService.getRankedDoubtsForSubject(email, subjectId);
+        return ResponseEntity.ok(new ApiResponse("Subject doubts fetched", doubts));
     }
 }
 

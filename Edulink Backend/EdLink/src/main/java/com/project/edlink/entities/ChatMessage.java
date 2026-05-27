@@ -21,6 +21,12 @@ public class ChatMessage {
 
     private Instant createdAt;
 
+    private Boolean isDoubt = false;
+
+    private Integer voteCount = 0;
+
+    private Boolean resolved = false;
+
     public ChatMessage() {
     }
 
@@ -30,6 +36,20 @@ public class ChatMessage {
         this.senderId = senderId;
         this.content = content;
         this.createdAt = createdAt;
+        this.isDoubt = false;
+        this.voteCount = 0;
+        this.resolved = false;
+    }
+
+    public ChatMessage(Long id, Long subjectId, Long senderId, String content, Instant createdAt, Boolean isDoubt, Integer voteCount, Boolean resolved) {
+        this.id = id;
+        this.subjectId = subjectId;
+        this.senderId = senderId;
+        this.content = content;
+        this.createdAt = createdAt;
+        this.isDoubt = isDoubt;
+        this.voteCount = voteCount;
+        this.resolved = resolved;
     }
 
     public Long getId() {
@@ -70,6 +90,30 @@ public class ChatMessage {
 
     public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public Boolean getIsDoubt() {
+        return isDoubt != null ? isDoubt : false;
+    }
+
+    public void setIsDoubt(Boolean isDoubt) {
+        this.isDoubt = isDoubt;
+    }
+
+    public Integer getVoteCount() {
+        return voteCount != null ? voteCount : 0;
+    }
+
+    public void setVoteCount(Integer voteCount) {
+        this.voteCount = voteCount;
+    }
+
+    public Boolean getResolved() {
+        return resolved != null ? resolved : false;
+    }
+
+    public void setResolved(Boolean resolved) {
+        this.resolved = resolved;
     }
 }
 

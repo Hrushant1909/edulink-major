@@ -56,7 +56,8 @@ public class WebSocketChatController {
         ChatMessageDto messageDto = chatService.sendMessageViaWebSocket(
             email, 
             request.getSubjectId(), 
-            request.getContent()
+            request.getContent(),
+            request.getIsDoubt()
         );
         
         // Broadcast to all subscribers of this subject's chat

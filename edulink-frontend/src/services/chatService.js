@@ -10,8 +10,8 @@ export const chatService = {
     return response.data
   },
 
-  async sendMessage(subjectId, content) {
-    const response = await api.post(`/api/chat/subjects/${subjectId}/messages`, { content })
+  async sendMessage(subjectId, content, isDoubt = false) {
+    const response = await api.post(`/api/chat/subjects/${subjectId}/messages`, { content, isDoubt })
     return response.data
   },
 
@@ -22,6 +22,26 @@ export const chatService = {
 
   async getParticipants(subjectId) {
     const response = await api.get(`/api/chat/subjects/${subjectId}/participants`)
+    return response.data
+  },
+
+  async toggleUpvote(messageId) {
+    const response = await api.post(`/api/chat/messages/${messageId}/upvote`)
+    return response.data
+  },
+
+  async toggleDoubt(messageId) {
+    const response = await api.post(`/api/chat/messages/${messageId}/doubt`)
+    return response.data
+  },
+
+  async toggleResolve(messageId) {
+    const response = await api.post(`/api/chat/messages/${messageId}/resolve`)
+    return response.data
+  },
+
+  async getSubjectDoubts(subjectId) {
+    const response = await api.get(`/api/chat/subjects/${subjectId}/doubts`)
     return response.data
   },
 }

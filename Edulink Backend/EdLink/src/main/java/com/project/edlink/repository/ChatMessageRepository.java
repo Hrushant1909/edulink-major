@@ -10,6 +10,8 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
     List<ChatMessage> findBySubjectIdOrderByIdAsc(Long subjectId);
 
     List<ChatMessage> findBySubjectIdAndIdGreaterThanOrderByIdAsc(Long subjectId, Long id);
+
+    List<ChatMessage> findBySubjectIdAndIsDoubtTrueOrderByVoteCountDescIdDesc(Long subjectId);
 }
 
 

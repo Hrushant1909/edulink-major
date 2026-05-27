@@ -8,6 +8,7 @@ public class WebSocketMessageRequest {
     
     private Long subjectId;
     private String content;
+    private Boolean isDoubt = false;
 
     public WebSocketMessageRequest() {
     }
@@ -15,6 +16,13 @@ public class WebSocketMessageRequest {
     public WebSocketMessageRequest(Long subjectId, String content) {
         this.subjectId = subjectId;
         this.content = content;
+        this.isDoubt = false;
+    }
+
+    public WebSocketMessageRequest(Long subjectId, String content, Boolean isDoubt) {
+        this.subjectId = subjectId;
+        this.content = content;
+        this.isDoubt = isDoubt;
     }
 
     public Long getSubjectId() {
@@ -31,5 +39,13 @@ public class WebSocketMessageRequest {
 
     public void setContent(String content) {
         this.content = content;
+    }
+
+    public Boolean getIsDoubt() {
+        return isDoubt != null ? isDoubt : false;
+    }
+
+    public void setIsDoubt(Boolean isDoubt) {
+        this.isDoubt = isDoubt;
     }
 }
