@@ -1,0 +1,15 @@
+nltk
+spacy
+fastapi
+uvicorn[standard]
+networkx
+numpy
+pandas
+scikit-learn
+sentence-transformers
+transformers
+torch
+keybert
+sumy
+groq
+python-dotenv
